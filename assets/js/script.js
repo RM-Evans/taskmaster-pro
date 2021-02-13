@@ -1,8 +1,33 @@
 var tasks = {};
 
+//bg-color alerts
+
+var auditTask = function(taskEl) {
+  //get from task element
+  var date = $(taskEl).find("span").text().trim();
+  //ensure it worked
+  console.log(date);
+
+  //convert to moment object at 5pm
+  var time = moment(date, "L").set("hour", 17);
+  //should print out object for the value of the date variable, but at 5pm of that date
+  console.log(time);
+
+  //remove any old classes from element
+  $(taskEl).removeClass("list-group-item-warning list-group-item-dange");
+
+  //apply new class if task is near/over due date
+  if(moment().isAfter(time)) {
+    $(taskEl).addClass("list-group-item-danger");
+  } else if (Math.abs(moment().diff(time, "days")) <= 2) {
+    $(taskEl.addClass("list-group-item-warning"));
+  }
+};
+
 var createTask = function (taskText, taskDate, taskList) {
   // create elements that make up a task item
   var taskLi = $("<li>").addClass("list-group-item");
+
   var taskSpan = $("<span>")
     .addClass("badge badge-primary badge-pill")
     .text(taskDate);
@@ -12,6 +37,9 @@ var createTask = function (taskText, taskDate, taskList) {
 
   // append span and p element to parent li
   taskLi.append(taskSpan, taskP);
+
+  //check due date
+  auditTask(taskLi);
 
 
   // append to ul list on the page
@@ -86,8 +114,8 @@ $(".list-group").on("blur", "textarea", function () {
 
 });
 
-//value of data was changed - date change
-$(".list-group").on("blur", "input[type='text']", function () {
+//value of data was changed - date change - blur => change : fixed inability to write date change in cards
+$(".list-group").on("change", "input[type='text']", function () {
   //get current text
   var date = $(this)
     .val()
@@ -116,7 +144,10 @@ $(".list-group").on("blur", "input[type='text']", function () {
   //replace input with span element
   $(this).replaceWith(taskSpan)
 
-})
+  //pass tasks <li> element into auditTask() to check new due date
+  auditTask($(taskSpan).closest(".list-group-item"));
+
+});
 
 
 // modal was triggered
@@ -181,6 +212,15 @@ $(".list-group").on("click", "span", function () {
   //swap out elements
   $(this).replaceWith(dateInput);
 
+  //enable jquery ui datepicker
+  dateInput.datepicker({
+    //minDate: 1,
+    onClose: function(){
+      //when calender is closed, force a "change" event on the dateInput
+      $(this).trigger("change");
+    }
+  })
+
   //automatically focus on new element
   dateInput.trigger("focus");
 });
@@ -237,6 +277,8 @@ $(".card .list-group").sortable({
   }
 });
 
+//drag to trash
+
 $("#trash").droppable({
   accept: ".card .list-group-item",
   tolerance: "touch",
@@ -251,4 +293,11 @@ $("#trash").droppable({
     console.log("out");
   }
 });
+
+//datepicker
+
+$("#modalDueDate").datepicker({
+  //minDate: 1
+});
+
 
